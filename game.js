@@ -307,7 +307,7 @@ function updatePlay() {
   if (Math.abs(p.vx) > maxV) p.vx += (p.vx > 0 ? -1 : 1) * 0.1;
 
   if (jumpPressed && p.onGround) {
-    p.vy = -4.7 - Math.abs(p.vx) * 0.25;
+    p.vy = -5.0 - Math.abs(p.vx) * 0.25;
     p.onGround = false;
     sJump();
   }
