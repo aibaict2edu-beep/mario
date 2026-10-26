@@ -7,9 +7,12 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<button id="mute" tabindex="-1" aria-label="音のオン/オフ">🔊</button>
 <div id="wrap">
   <canvas id="game" width="320" height="240"></canvas>
+  <div id="sub">
+    <span id="help">← → / A D：移動　Space / Z / ↑：ジャンプ（長押しで高く）　Shift / X：ダッシュ　M：音のオン/オフ</span>
+    <button id="mute" tabindex="-1" aria-label="音のオン/オフ">🔊</button>
+  </div>
   <div id="touch">
     <div class="pad">
       <button data-key="left">◀</button>
@@ -20,7 +23,6 @@
       <button data-key="jump">ジャンプ</button>
     </div>
   </div>
-  <p id="help">← → / A D：移動　Space / Z / ↑：ジャンプ（長押しで高く）　Shift / X：ダッシュ　M：音のオン/オフ</p>
 </div>
 <script src="stages.js"></script>
 <script src="audio.js"></script>

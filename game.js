@@ -20,6 +20,7 @@ addEventListener('keydown', e => {
   keys[e.code] = true;
   if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) e.preventDefault();
   initAudio();
+  if (e.repeat) return;   // 押しっぱなしのリピートでは画面送り・ミュート切替をしない
   if (e.code === 'KeyM') setMuted(!muted);
   if (e.code === 'Space' || e.code === 'Enter') pressStart();
 });
@@ -36,6 +37,8 @@ document.querySelectorAll('#touch button').forEach(b => {
   b.addEventListener('pointerleave', off);
 });
 cv.addEventListener('pointerdown', () => { initAudio(); pressStart(); });
+// 長押しでスマホのメニューが出ないように
+document.getElementById('touch').addEventListener('contextmenu', e => e.preventDefault());
 
 const isLeft  = () => keys.ArrowLeft || keys.KeyA || touch.left;
 const isRight = () => keys.ArrowRight || keys.KeyD || touch.right;
@@ -145,11 +148,18 @@ function buildLevel() {
 
 // ===== ゲーム状態 =====
 let state = 'title';
-let player, cam, score, coinCount, lives, timeLeft, frame, deadTimer, clearTimer, flagY, tick;
+let player, cam, score, coinCount, lives, timeLeft, frame, deadTimer, clearTimer, overTimer = 0, flagY, tick;
 
 function newPlayer() {
   return { x: stage.startX, y: 12 * TS - SMALL_H, w: 12, h: SMALL_H, vx: 0, vy: 0,
-           onGround: false, dir: 1, anim: 0, big: false, star: 0, inv: 0, freeze: 0 };
+           onGround: false, dir: 1, anim: 0, big: false, star: 0, inv: 0, freeze: 0,
+           coyote: 0, jumpBuf: 0 };
+}
+// タイトル画面用：地面に立った姿勢のペンギン
+function titlePlayer() {
+  const p = newPlayer();
+  p.y = 13 * TS - SMALL_H; p.onGround = true;
+  return p;
 }
 function newGame() {
   score = 0; coinCount = 0; lives = 3; stageIdx = 0;
@@ -164,10 +174,11 @@ function startRun() {
 }
 function hasNextStage() { return stageIdx + 1 < STAGES.length; }
 function pressStart() {
-  if (state === 'title' || state === 'over') newGame();
+  if (state === 'title') newGame();
+  else if (state === 'over' && overTimer > 45) newGame();   // 直後の誤タップで即リスタートしない
   else if (state === 'clear' && clearTimer > 200) {
     if (hasNextStage()) { stageIdx++; startRun(); }
-    else { stageIdx = 0; buildLevel(); player = newPlayer(); cam = 0; state = 'title'; }
+    else { stageIdx = 0; buildLevel(); player = titlePlayer(); cam = 0; state = 'title'; }
   }
 }
 
@@ -257,7 +268,7 @@ function die() {
   if (state !== 'play') return;
   const p = player;
   if (p.big) { p.big = false; p.h = SMALL_H; p.y += BIG_H - SMALL_H; }
-  p.star = 0;
+  p.star = 0; p.inv = 0; p.freeze = 0;
   state = 'dead'; deadTimer = 0;
   p.vy = -5; p.vx = 0;
   Music.play(null);
@@ -306,9 +317,13 @@ function updatePlay() {
   }
   if (Math.abs(p.vx) > maxV) p.vx += (p.vx > 0 ? -1 : 1) * 0.1;
 
-  if (jumpPressed && p.onGround) {
-    p.vy = -5.0 - Math.abs(p.vx) * 0.25;
+  // 踏み切りの猶予(コヨーテタイム)と先行入力：足場の端や着地直前のジャンプを受け付ける
+  p.coyote = p.onGround ? 6 : Math.max(0, p.coyote - 1);
+  p.jumpBuf = jumpPressed ? 6 : Math.max(0, p.jumpBuf - 1);
+  if (p.jumpBuf > 0 && p.coyote > 0 && p.vy >= 0) {
+    p.vy = -5.3 - Math.abs(p.vx) * 0.2;
     p.onGround = false;
+    p.coyote = 0; p.jumpBuf = 0;
     sJump();
   }
   const g = (p.vy < 0 && jump) ? 0.19 : 0.45;
@@ -401,7 +416,7 @@ function updatePlay() {
   if (p.x + p.w > FLAG_COL * TS + 6) {
     state = 'clear'; clearTimer = 0;
     p.x = FLAG_COL * TS - 4; p.vx = 0; p.vy = 0; p.star = 0; p.inv = 0;
-    score += 1000 + Math.max(0, Math.round((12 * TS - p.y) * 5));
+    score += 1000 + Math.max(0, Math.round((12 * TS - (p.y + p.h)) * 5));   // 高い所でつかむほどボーナス
     Music.play('clear');
   }
 }
@@ -411,7 +426,7 @@ function updateDead() {
   if (deadTimer > 20) { player.vy += 0.3; player.y += player.vy; }
   if (deadTimer > 130) {
     lives--;
-    if (lives <= 0) { state = 'over'; Music.play('over'); }
+    if (lives <= 0) { state = 'over'; overTimer = 0; Music.play('over'); }
     else startRun();
   }
 }
@@ -421,7 +436,7 @@ function updateClear() {
   const p = player;
   if (flagY < 12 * TS - 12) flagY += 1.5;
   if (p.y < 12 * TS - p.h + 0.5) { p.y = Math.min(p.y + 1.8, 12 * TS - p.h); }
-  else if (timeLeft > 0) { timeLeft = Math.max(0, timeLeft - 3); score += 30; }
+  else if (timeLeft > 0) { const d = Math.min(3, timeLeft); timeLeft -= d; score += d * 10; }   // 残り時間1につき10点
 }
 
 function updateParticles() {
@@ -564,12 +579,12 @@ function drawItems() {
 function drawEnemy(e) {
   const x = Math.round(e.x - cam), y = Math.round(e.y);
   if (x < -20 || x > VW + 20) return;
-  if (e.flying) { ctx.save(); ctx.translate(0, 2 * y + 14); ctx.scale(1, -1); }
   if (e.squish) {
     rect(x, y + 10, 14, 4, '#7a3fa0');
     rect(x + 2, y + 11, 3, 1, '#fff'); rect(x + 9, y + 11, 3, 1, '#fff');
     return;
   }
+  if (e.flying) { ctx.save(); ctx.translate(0, 2 * y + 14); ctx.scale(1, -1); }
   const step = Math.floor(tick / 8) % 2;
   rect(x + 1, y, 12, 4, '#7a3fa0');
   rect(x, y + 3, 14, 7, '#7a3fa0');
@@ -616,12 +631,13 @@ function text(str, x, y, size = 12, color = '#fff', align = 'left') {
 }
 
 function drawHUD() {
+  // 1行目：スコア / コイン / のこり時間（右寄せ）。2行目：残機 / スター / ステージ（右寄せ）
   text('スコア ' + String(score).padStart(6, '0'), 8, 14, 11);
-  text('コイン ×' + String(coinCount).padStart(2, '0'), 120, 14, 11);
-  text('ステージ ' + stage.name, 205, 14, 11);
-  text('のこり ' + Math.max(0, timeLeft), 280, 14, 11);
+  text('コイン ×' + String(coinCount).padStart(2, '0'), 128, 14, 11);
+  text('のこり ' + Math.max(0, timeLeft), VW - 8, 14, 11, '#fff', 'right');
   text('♥×' + lives, 8, 28, 11, '#ffb0b0');
   if (player && player.star > 0) text('★ ' + Math.ceil(player.star / 60), 60, 28, 11, '#ffe070');
+  text('ステージ ' + stage.name, VW - 8, 28, 11, '#fff', 'right');
 }
 
 function drawOverlay() {
@@ -660,6 +676,7 @@ function draw() {
 // ===== メインループ（60fps固定） =====
 function update() {
   tick++;
+  if (state === 'over') overTimer++;
   if (state === 'play') updatePlay();
   else if (state === 'dead') updateDead();
   else if (state === 'clear') updateClear();
@@ -677,7 +694,7 @@ function loop(now) {
 
 // タイトル画面用の初期化
 buildLevel();
-player = newPlayer();
+player = titlePlayer();
 cam = 0; score = 0; coinCount = 0; lives = 3; timeLeft = stage.time; flagY = 3 * TS; tick = 0; frame = 0;
 requestAnimationFrame(loop);
 })();
