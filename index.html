@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>ネコ・ランナー</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="wrap">
+  <canvas id="game" width="320" height="240"></canvas>
+  <div id="touch">
+    <div class="pad">
+      <button data-key="left">◀</button>
+      <button data-key="right">▶</button>
+    </div>
+    <div class="pad">
+      <button data-key="run">ダッシュ</button>
+      <button data-key="jump">ジャンプ</button>
+    </div>
+  </div>
+  <p id="help">← → / A D：移動　Space / Z / ↑：ジャンプ（長押しで高く）　Shift / X：ダッシュ</p>
+</div>
+<script src="game.js"></script>
+</body>
+</html>

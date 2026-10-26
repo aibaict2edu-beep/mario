@@ -1,0 +1,51 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body {
+  margin: 0;
+  height: 100%;
+  background: #111;
+  color: #ccc;
+  font-family: "Hiragino Sans", "Meiryo", sans-serif;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+}
+#wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+#game {
+  width: min(100vw, calc((100vh - 120px) * 4 / 3));
+  aspect-ratio: 4 / 3;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  background: #5c94fc;
+  border: 2px solid #333;
+}
+#help { font-size: 12px; margin: 8px 0 0; text-align: center; }
+#touch {
+  display: none;
+  width: 100%;
+  max-width: 640px;
+  justify-content: space-between;
+  padding: 10px 14px 0;
+}
+.pad { display: flex; gap: 10px; }
+#touch button {
+  min-width: 64px;
+  height: 56px;
+  font-size: 16px;
+  border-radius: 12px;
+  border: 2px solid #666;
+  background: #2a2a2a;
+  color: #fff;
+  touch-action: none;
+}
+#touch button.on { background: #f08c2a; border-color: #ffd08a; }
+@media (pointer: coarse) {
+  #touch { display: flex; }
+  #help { display: none; }
+  #game { width: min(100vw, calc((100vh - 90px) * 4 / 3)); }
+}
