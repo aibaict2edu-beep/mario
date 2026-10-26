@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
-<title>ネコ・ランナー</title>
+<title>ペンギン・ランナー</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<button id="mute" tabindex="-1" aria-label="音のオン/オフ">🔊</button>
 <div id="wrap">
   <canvas id="game" width="320" height="240"></canvas>
   <div id="touch">
@@ -19,8 +20,10 @@
       <button data-key="jump">ジャンプ</button>
     </div>
   </div>
-  <p id="help">← → / A D：移動　Space / Z / ↑：ジャンプ（長押しで高く）　Shift / X：ダッシュ</p>
+  <p id="help">← → / A D：移動　Space / Z / ↑：ジャンプ（長押しで高く）　Shift / X：ダッシュ　M：音のオン/オフ</p>
 </div>
+<script src="stages.js"></script>
+<script src="audio.js"></script>
 <script src="game.js"></script>
 </body>
 </html>
