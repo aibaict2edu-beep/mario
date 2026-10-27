@@ -416,7 +416,9 @@ function updatePlay() {
   if (p.x + p.w > FLAG_COL * TS + 6) {
     state = 'clear'; clearTimer = 0;
     p.x = FLAG_COL * TS - 4; p.vx = 0; p.vy = 0; p.star = 0; p.inv = 0;
-    score += 1000 + Math.max(0, Math.round((12 * TS - (p.y + p.h)) * 5));   // 高い所でつかむほどボーナス
+    p.y = Math.max(p.y, 2 * TS);                       // 旗のてっぺんより上でつかんだ扱いにならないように
+    const foot = Math.max(p.y + p.h, 2 * TS);
+    score += 1000 + Math.max(0, Math.round((12 * TS - foot) * 5));   // 高い所でつかむほどボーナス（最大1800）
     Music.play('clear');
   }
 }

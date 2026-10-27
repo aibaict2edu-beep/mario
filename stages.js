@@ -4,8 +4,8 @@ const TILE = { EMPTY: 0, GROUND: 1, BRICK: 2, QUESTION: 3, USED: 4, HARD: 5, PIP
 const STAGES = [
   {
     name: '1-1',
-    cols: 160,       // ステージの横幅（タイル数）
-    flagCol: 148,    // ゴールの旗の列
+    cols: 156,       // ステージの横幅（タイル数）
+    flagCol: 142,    // ゴールの旗の列（階段の端から約54px。最上段からのジャンプで旗の上のほうをつかめる距離）
     time: 300,       // 制限時間
     startX: 40,      // スタート位置(px)
 
